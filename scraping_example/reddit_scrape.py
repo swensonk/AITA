@@ -6,9 +6,12 @@ def main():
     urls = ["https://www.reddit.com/r/AmItheAsshole/comments/1iz4o6f/aita_for_insulting_my_husband_for_what_he_said/"]
     scraper = RedditScraper(urls[0])
     scraper.get_content()
+    post_flair = scraper.get_flair()
     post = scraper.parse("div", "text-neutral-content")
     tokenized_post = scraper.tokenize(post[0])
-    print(tokenized_post)
+    print("Post Flair: ", post_flair)
+    print("tokenized post: ", tokenized_post)
+    
 
 
 
@@ -40,6 +43,10 @@ class RedditScraper:
         text_post = text_post.split()
 
         return text_post
+
+    def get_flair(self, slot_name = "post-flair"):
+        slot_element = self.soup.find(attrs={"slot": slot_name})
+        return slot_element.get_text(strip=True) if slot_element else None
 
 
 class DataExtractor:
