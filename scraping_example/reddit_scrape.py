@@ -86,13 +86,23 @@ class RedditScraper:
         self.soup = None
 
     def get_content(self):
-        response = requests.get(self.url)
+        error_code = -1
         time_wait = 5
-        while response.status_code == 429:
-            print(f'WARNING: "Too many requests" error received, waiting {time_wait:.3f} seconds...')
-            time.sleep(time_wait)
-            response = requests.get(self.url)
-            time_wait *= 1.5
+        while error_code != 0:
+            error_code = 0
+            try:
+                response = requests.get(self.url)
+                if response.status_code == 429:
+                    error_code = 1
+            except requests.exceptions.ReadTimeout:
+                error_code = 2
+            if error_code == 1:
+                print(f'WARNING: "Too many requests" error received, waiting {time_wait:.3f} seconds...')
+            elif error_code == 2:
+                print(f'WARNING: Timeout error detected, waiting {time_wait:.3f} seconds...')
+            if error_code != 0:
+                time.sleep(time_wait)
+                time_wait *= 1.5
         if response.status_code == 200:
             self.soup = BeautifulSoup(response.text, "html.parser")
         else:
