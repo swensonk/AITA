@@ -23,7 +23,7 @@ def main():
                                  r'/r/AmItheAsshole/comments/\w+/\w+/(?=[?#]|$)',
                                  r'/r/AmItheAsshole/.*',
                                  ['cId', 'iId'])
-    save_every_min = 3
+    save_every_min = 1
     last_save_time = time.time()
     while True:
         for u in urls:
