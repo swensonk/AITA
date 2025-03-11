@@ -94,19 +94,26 @@ class RedditScraper:
                 response = requests.get(self.url)
                 if response.status_code == 429:
                     error_code = 1
+                elif response.status_code >= 500 and response.status_code < 600:
+                    error_code = 4
             except requests.exceptions.ReadTimeout:
                 error_code = 2
             except requests.exceptions.ChunkedEncodingError:
                 error_code = 3
+
             if error_code == 1:
                 print(f'WARNING: "Too many requests" error received, waiting {time_wait:.3f} seconds...')
             elif error_code == 2:
                 print(f'WARNING: Timeout error detected, waiting {time_wait:.3f} seconds...')
             elif error_code == 3:
                 print(f'WARNING: Invalid chunk length error occurred, trying again in {time_wait:.3f} seconds...')
+            elif error_code == 4:
+                print(f'WARNING: Server error {response.status_code} received, trying again in {time_wait:.3f} seconds...')
+
             if error_code != 0:
                 time.sleep(time_wait)
                 time_wait *= 1.5
+
         if response.status_code == 200:
             self.soup = BeautifulSoup(response.text, "html.parser")
         else:
