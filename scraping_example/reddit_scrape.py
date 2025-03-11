@@ -4,12 +4,13 @@ import re
 import time
 import os
 import glob
+import gzip
 
 
 def main():
     initial_urls = ["https://reddit.com/r/AmItheAsshole/comments/1iz4o6f/aita_for_insulting_my_husband_for_what_he_said/"]
     result_folder = '../../reddit_scraper_results'
-    
+
     urls = initial_urls
     post_store = PostStore(result_folder)
     url_store_path = result_folder + '/url_results.txt'
@@ -33,7 +34,7 @@ def main():
                     post_id = scraper.get_post_id()
                     post_flair = scraper.get_flair()
                     tokenized_post = scraper.tokenize(post)
-                    post_store.add(post_id, post_flair, ' '.join(tokenized_post))
+                    post_store.add(post_id, post_flair, ' '.join(tokenized_post), scraper.html)
                     print(f'Scraped post: "{post_id}", flair: "{post_flair}"')
             else:
                 url_manager.crawl(u)
@@ -60,13 +61,18 @@ class PostStore:
     def keys(self):
         return list(self.key_set)
 
-    def add(self, id, flair, contents):
+    def add(self, id, flair, contents, html=None):
         file_name = self.folder + '/post_' + id + '.txt'
+        html_file_name = self.folder + '/post_' + id + '.html.gz'
 
         out = [flair, contents]
 
         with open(file_name, 'w', encoding='utf-8') as f:
             f.write('\n'.join(out))
+
+        if html is not None:
+            with gzip.GzipFile(html_file_name, 'wb') as f:
+                f.write(html.encode(encoding='utf-8'))
 
     def get(self, id):
         file_name = self.folder + '/post_' + id + '.txt'
@@ -79,11 +85,26 @@ class PostStore:
         contents = '\n'.join(file_lines[1:])
         return flair, contents
 
+    def get_html(self, id):
+        file_name = self.folder + '/post_' + id + '.html.gz'
+
+        if not os.path.exists(file_name):
+            return None
+
+        with gzip.open(file_name, 'rb') as f:
+            contents = f.read().decode(encoding='utf-8')
+
+        return contents
+
 
 class RedditScraper:
     def __init__(self, url):
         self.url = url
         self.soup = None
+
+    def load_string(self, html):
+        self.html = html
+        self.soup = BeautifulSoup(self.html, "html.parser")
 
     def get_content(self):
         error_code = -1
@@ -115,7 +136,8 @@ class RedditScraper:
                 time_wait *= 1.5
 
         if response.status_code == 200:
-            self.soup = BeautifulSoup(response.text, "html.parser")
+            self.html = response.text
+            self.soup = BeautifulSoup(self.html, "html.parser")
         else:
             raise Exception(f"Failed to get {self.url}, Status Code: {response.status_code}")
 
