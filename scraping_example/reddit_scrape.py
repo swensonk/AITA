@@ -19,7 +19,10 @@ def main():
         url_manager = URLManager.from_file(url_store_path)
         urls = url_manager.get_all_urls()
     else:
-        url_manager = URLManager('reddit.com', r'/r/AmItheAsshole/comments/\w+/\w+/(?=[?#]|$)', r'/r/AmItheAsshole/.*')
+        url_manager = URLManager('reddit.com',
+                                 r'/r/AmItheAsshole/comments/\w+/\w+/(?=[?#]|$)',
+                                 r'/r/AmItheAsshole/.*',
+                                 ['cId', 'iId'])
     save_every_min = 3
     last_save_time = time.time()
     while True:
@@ -203,25 +206,30 @@ class ScraperManager:  # TODO: Merge some stuff from main() into here
 
 
 class URLManager:
-    def __init__(self, domain, url_regex, all_url_regex=r'.'):
+    def __init__(self, domain, url_regex, all_url_regex=r'.', exclude_url_params=[]):
         self.domain = domain
         self.url_regex = url_regex
         self.all_url_regex = all_url_regex
         self.matching_urls = set()
         self.all_urls = set()
         self.crawled_urls = set()
+        self.exclude_url_params = exclude_url_params
 
-    def strip_domain(self, url):
+    def strip_url(self, url):
         if self.domain in url:
             while self.domain in url:
                 url = '/'.join(url.split('/')[1:])
             url = '/' + url
         elif '//' in url:
             return None  # Different domain
+        for param in self.exclude_url_params:
+            url = re.sub(r'\?' + param + r'=[^&#]+&', '?', url)
+            url = re.sub(r'\?' + param + r'=[^&#]+', '', url)
+            url = re.sub(r'&' + param + r'=[^&#]+', '', url)
         return url
 
     def validate(self, url):
-        url = self.strip_domain(url)
+        url = self.strip_url(url)
         if url is None:
             return None  # Different domain
         regex_match = re.match(self.all_url_regex, url)
@@ -230,7 +238,7 @@ class URLManager:
         return url
 
     def is_matching(self, url):
-        url = self.strip_domain(url)
+        url = self.strip_url(url)
         if url is None:
             return None  # Different domain
         regex_match = re.match(self.url_regex, url)
@@ -291,6 +299,9 @@ class URLManager:
         out.append('CRAWLED')
         out += list(self.crawled_urls)
 
+        out.append('PARAM_EXCLUDED')
+        out += self.exclude_url_params
+
         if os.path.exists(file_name):
             os.replace(file_name, file_name + '.bak')
         with open(file_name, 'w', encoding='utf-8') as f:
@@ -306,6 +317,7 @@ class URLManager:
         self.matching_urls = set()
         self.all_urls = set()
         self.crawled_urls = set()
+        self.exclude_url_params = []
 
         curr_url_type = ''
         for i, line in enumerate(file_lines):
@@ -318,7 +330,7 @@ class URLManager:
                 self.url_regex = line
             elif i == 3:
                 self.all_url_regex = line
-            elif line == 'MATCHING' or line == 'ALL' or line == 'CRAWLED':
+            elif line == 'MATCHING' or line == 'ALL' or line == 'CRAWLED' or line == 'PARAM_EXCLUDED':
                 curr_url_type = line
             elif curr_url_type == 'MATCHING':
                 self.matching_urls.add(line)
@@ -326,6 +338,8 @@ class URLManager:
                 self.all_urls.add(line)
             elif curr_url_type == 'CRAWLED':
                 self.crawled_urls.add(line)
+            elif curr_url_type == 'PARAM_EXCLUDED':
+                self.exclude_url_params.append(line)
 
         return self
 
