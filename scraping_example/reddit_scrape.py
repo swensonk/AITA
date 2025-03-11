@@ -8,7 +8,7 @@ import gzip
 
 
 def main():
-    initial_urls = ["https://reddit.com/r/AmItheAsshole/comments/1iz4o6f/aita_for_insulting_my_husband_for_what_he_said/"]
+    initial_urls = ["https://reddit.com/r/AmItheAsshole/"]
     result_folder = '../../reddit_scraper_results'
 
     urls = initial_urls
@@ -20,7 +20,7 @@ def main():
         urls = url_manager.get_all_urls()
     else:
         url_manager = URLManager('reddit.com', r'/r/AmItheAsshole/comments/\w+/\w+/(?=[?#]|$)', r'/r/AmItheAsshole/.*')
-    save_every_min = 5
+    save_every_min = 3
     last_save_time = time.time()
     while True:
         for u in urls:
