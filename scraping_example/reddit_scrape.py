@@ -27,6 +27,7 @@ def main():
     last_save_time = time.time()
     while True:
         for u in urls:
+            print(f'Scraping {u}')
             if url_manager.is_matching(u) and not url_manager.was_crawled(u):
                 scraper = RedditScraper(u)
                 scraper.get_content()
