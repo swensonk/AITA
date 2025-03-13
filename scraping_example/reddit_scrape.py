@@ -8,7 +8,7 @@ import gzip
 
 
 def main():
-    initial_urls = ["https://reddit.com/r/AmItheAsshole/"]
+    initial_urls = ["https://old.reddit.com/r/AmItheAsshole/"]
     result_folder = '../../reddit_scraper_results'
 
     urls = initial_urls
@@ -19,7 +19,7 @@ def main():
         url_manager = URLManager.from_file(url_store_path)
         urls = url_manager.get_all_urls()
     else:
-        url_manager = URLManager('reddit.com',
+        url_manager = URLManager('old.reddit.com',
                                  r'/r/AmItheAsshole/comments/\w+/\w+/(?=[?#]|$)',
                                  r'/r/AmItheAsshole/.*',
                                  ['cId', 'iId'])
@@ -145,10 +145,10 @@ class RedditScraper:
         else:
             raise Exception(f"Failed to get {self.url}, Status Code: {response.status_code}")
 
-    def parse(self, element, class_name, inner_tag="p"):
+    def parse(self, element, attr_vals, inner_tag="p"):
         if self.soup:
-            elements = self.soup.find_all(element, class_=class_name)
-            return [" ".join(p.text.strip() for p in elem.find_all(inner_tag)) for elem in elements]
+            elem = self.soup.find(element, attrs=attr_vals)
+            return " ".join(p.text.strip() for p in elem.find_all(inner_tag))
         return None
 
     def tokenize(self, text_post):
@@ -162,18 +162,18 @@ class RedditScraper:
 
         return text_post
 
-    def get_flair(self, slot_name = "post-flair"):
-        slot_element = self.soup.find(attrs={"slot": slot_name})
-        return slot_element.get_text(strip=True) if slot_element else None
+    def get_flair(self):
+        slot_element = self.soup.find("span", class_="linkflairlabel")
+        return slot_element.get_text(strip=True) if slot_element else ''
 
     def get_post_content(self):
-        post_list = self.parse("div", "text-neutral-content")
-        return post_list[0] if post_list else None
+        post = self.parse("div", "expando")
+        return post
 
     def get_post_id(self):
         if self.soup:
-            elements = self.soup.find_all("shreddit-post", id=True)
-            return elements[0]["id"]
+            element = self.soup.find("div", attrs={"data-fullname": True})
+            return element["data-fullname"]
         return None
 
 
@@ -181,7 +181,7 @@ class DataExtractor:
     def __init__(self, soup):
         self.soup = soup
 
-    def get_titles(self):
+    def get_titles(self):  # Unused for now, may need to fix this later
         return [title.text.strip() for title in self.soup.find_all("placeholder")]
 
     def get_links(self):
