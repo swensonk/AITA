@@ -120,7 +120,10 @@ class RedditScraper:
         while error_code != 0:
             error_code = 0
             try:
-                response = requests.get(self.url)
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko',
+                }
+                response = requests.get(self.url, headers=headers)
                 if response.status_code == 429:
                     error_code = 1
                 elif response.status_code >= 500 and response.status_code < 600:
