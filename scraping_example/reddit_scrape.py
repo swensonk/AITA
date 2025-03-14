@@ -122,6 +122,8 @@ class RedditScraper:
                     error_code = 1
                 elif response.status_code >= 500 and response.status_code < 600:
                     error_code = 4
+                elif response.status_code >= 400 and response.status_code < 500:
+                    error_code = 5
             except requests.exceptions.ReadTimeout:
                 error_code = 2
             except requests.exceptions.ChunkedEncodingError:
@@ -135,6 +137,9 @@ class RedditScraper:
                 print(f'WARNING: Invalid chunk length error occurred, trying again in {time_wait:.3f} seconds...')
             elif error_code == 4:
                 print(f'WARNING: Server error {response.status_code} received, trying again in {time_wait:.3f} seconds...')
+            elif error_code == 5:
+                print(f'WARNING: User error {response.status_code} received, skipping this page...')
+                return False
 
             if error_code != 0:
                 time.sleep(time_wait)
@@ -145,6 +150,8 @@ class RedditScraper:
             self.soup = BeautifulSoup(self.html, "html.parser")
         else:
             raise Exception(f"Failed to get {self.url}, Status Code: {response.status_code}")
+
+        return True
 
     def parse(self, element, attr_vals, inner_tag="p"):
         if self.soup:
@@ -267,7 +274,9 @@ class URLManager:
 
         if soup is None:
             scraper = RedditScraper('https://' + self.domain + url)
-            scraper.get_content()
+            fetched = scraper.get_content()
+            if not fetched:
+                return  # Skip if we couldn't fetch
             soup = scraper.soup
         extractor = DataExtractor(soup)
         new_urls = extractor.get_links()
