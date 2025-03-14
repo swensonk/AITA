@@ -20,9 +20,9 @@ def main():
         urls = url_manager.get_all_urls()
     else:
         url_manager = URLManager('old.reddit.com',
-                                 r'/r/AmItheAsshole/comments/\w+/\w+/(?=[?#]|$)',
+                                 r'/r/AmItheAsshole/comments/\w+/\w+/',
                                  r'/r/AmItheAsshole/.*',
-                                 r'/r/AmItheAsshole/comments/\w+/\w+/[^?#]',
+                                 r'/r/AmItheAsshole/comments/\w+/\w+/.+',
                                  ['cId', 'iId'])
     save_every_min = 1
     last_save_time = time.time()
