@@ -26,13 +26,15 @@ def main():
                                  ['cId', 'iId'])
     save_every_min = 1
     last_save_time = time.time()
-    while True:
+    scraped_something = True
+    while scraped_something:
+        scraped_something = False
         for u in urls:
             print(f'Scraping {u}')
             if url_manager.is_matching(u) and not url_manager.was_crawled(u):
                 scraper = RedditScraper(u)
                 scraper.get_content()
-                url_manager.crawl(u, scraper.soup)
+                scraped_something |= url_manager.crawl(u, scraper.soup)
 
                 post = scraper.get_post_content()
                 if post is not None:
@@ -42,7 +44,7 @@ def main():
                     post_store.add(post_id, post_flair, ' '.join(tokenized_post), scraper.html)
                     print(f'Scraped post: "{post_id}", flair: "{post_flair}"')
             else:
-                url_manager.crawl(u)
+                scraped_something |= url_manager.crawl(u)
 
             if time.time() >= last_save_time + save_every_min * 60:
                 url_manager.to_file(url_store_path)
@@ -50,6 +52,7 @@ def main():
 
         urls = url_manager.get_all_urls()
 
+    url_manager.to_file(url_store_path)
     return
 
 
@@ -266,17 +269,17 @@ class URLManager:
     def crawl(self, url, soup=None):
         url = self.validate(url)
         if url is None:
-            return
+            return False
 
         if url in self.crawled_urls:
-            return
+            return False
         self.crawled_urls.add(url)
 
         if soup is None:
             scraper = RedditScraper('https://' + self.domain + url)
             fetched = scraper.get_content()
             if not fetched:
-                return  # Skip if we couldn't fetch
+                return False  # Skip if we couldn't fetch
             soup = scraper.soup
         extractor = DataExtractor(soup)
         new_urls = extractor.get_links()
@@ -289,6 +292,8 @@ class URLManager:
                 self.all_urls.add(new_url_processed)
                 if self.is_matching(new_url_processed):
                     self.matching_urls.add(new_url_processed)
+
+        return True
 
     def get_matching_urls(self):
         return ['https://' + self.domain + u for u in list(self.matching_urls)]
