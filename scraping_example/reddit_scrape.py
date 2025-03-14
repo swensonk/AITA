@@ -30,11 +30,12 @@ def main():
     while scraped_something:
         scraped_something = False
         for u in urls:
-            print(f'Scraping {u}')
             if url_manager.is_matching(u) and not url_manager.was_crawled(u):
                 scraper = RedditScraper(u)
                 scraper.get_content()
-                scraped_something |= url_manager.crawl(u, scraper.soup)
+                success = url_manager.crawl(u, scraper.soup)
+                if success:
+                    print(f'Scraping {u}')
 
                 post = scraper.get_post_content()
                 if post is not None:
@@ -44,7 +45,11 @@ def main():
                     post_store.add(post_id, post_flair, ' '.join(tokenized_post), scraper.html)
                     print(f'Scraped post: "{post_id}", flair: "{post_flair}"')
             else:
-                scraped_something |= url_manager.crawl(u)
+                success = url_manager.crawl(u)
+                if success:
+                    print(f'Scraping {u}')
+
+            scraped_something |= success
 
             if time.time() >= last_save_time + save_every_min * 60:
                 url_manager.to_file(url_store_path)
