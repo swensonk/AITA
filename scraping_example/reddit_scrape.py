@@ -8,7 +8,13 @@ import gzip
 
 
 def main():
-    initial_urls = ["https://old.reddit.com/r/AmItheAsshole/"]
+    initial_urls = [
+        "https://old.reddit.com/r/AmItheAsshole/",
+        "https://old.reddit.com/r/AmItheAsshole/new/",
+        "https://old.reddit.com/r/AmItheAsshole/rising/",
+        "https://old.reddit.com/r/AmItheAsshole/controversial/?t=all",
+        "https://old.reddit.com/r/AmItheAsshole/top/?t=all",
+    ]
     result_folder = '../../reddit_scraper_results'
 
     urls = initial_urls
