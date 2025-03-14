@@ -22,6 +22,7 @@ def main():
         url_manager = URLManager('old.reddit.com',
                                  r'/r/AmItheAsshole/comments/\w+/\w+/(?=[?#]|$)',
                                  r'/r/AmItheAsshole/.*',
+                                 r'/r/AmItheAsshole/comments/\w+/\w+/[^?#]',
                                  ['cId', 'iId'])
     save_every_min = 1
     last_save_time = time.time()
@@ -207,10 +208,11 @@ class ScraperManager:  # TODO: Merge some stuff from main() into here
 
 
 class URLManager:
-    def __init__(self, domain, url_regex, all_url_regex=r'.', exclude_url_params=[]):
+    def __init__(self, domain, url_regex, all_url_regex=r'.', exclude_regex=r'(?!x)x', exclude_url_params=[]):
         self.domain = domain
         self.url_regex = url_regex
         self.all_url_regex = all_url_regex
+        self.exclude_regex = exclude_regex
         self.matching_urls = set()
         self.all_urls = set()
         self.crawled_urls = set()
@@ -236,6 +238,9 @@ class URLManager:
         regex_match = re.match(self.all_url_regex, url)
         if regex_match is None:
             return None  # Doesn't match all_url_regex
+        regex_match = re.match(self.exclude_regex, url)
+        if regex_match is not None:
+            return None  # Excluded from crawling
         return url
 
     def is_matching(self, url):
@@ -290,6 +295,7 @@ class URLManager:
         out.append(self.domain)
         out.append(self.url_regex)
         out.append(self.all_url_regex)
+        out.append(self.exclude_regex)
 
         out.append('MATCHING')
         out += list(self.matching_urls)
@@ -331,6 +337,8 @@ class URLManager:
                 self.url_regex = line
             elif i == 3:
                 self.all_url_regex = line
+            elif i == 4:
+                self.exclude_regex = line
             elif line == 'MATCHING' or line == 'ALL' or line == 'CRAWLED' or line == 'PARAM_EXCLUDED':
                 curr_url_type = line
             elif curr_url_type == 'MATCHING':
