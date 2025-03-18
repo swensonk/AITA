@@ -243,8 +243,9 @@ class URLManager:
         self.exclude_url_params = exclude_url_params
 
     def strip_url(self, url):
-        if self.domain in url:
-            while self.domain in url:
+        root_domain = '.'.join(self.domain.split('.')[-2:])
+        if root_domain in url:
+            while root_domain in url:
                 url = '/'.join(url.split('/')[1:])
             url = '/' + url
         elif '//' in url:
