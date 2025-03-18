@@ -145,11 +145,13 @@ class RedditScraper:
                 error_code = 2
             except requests.exceptions.ChunkedEncodingError:
                 error_code = 3
+            except requests.exceptions.ConnectTimeout:
+                error_code = 6
 
             if error_code == 1:
                 print(f'WARNING: "Too many requests" error received, waiting {time_wait:.3f} seconds...')
             elif error_code == 2:
-                print(f'WARNING: Timeout error detected, waiting {time_wait:.3f} seconds...')
+                print(f'WARNING: Read Timeout error detected, waiting {time_wait:.3f} seconds...')
             elif error_code == 3:
                 print(f'WARNING: Invalid chunk length error occurred, trying again in {time_wait:.3f} seconds...')
             elif error_code == 4:
@@ -157,6 +159,8 @@ class RedditScraper:
             elif error_code == 5:
                 print(f'WARNING: User error {response.status_code} received, skipping this page...')
                 return False
+            elif error_code == 6:
+                print(f'WARNING: Connection Timeout error detected, waiting {time_wait:.3f} seconds...')
 
             if error_code != 0:
                 time.sleep(time_wait)
