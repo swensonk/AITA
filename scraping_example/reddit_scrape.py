@@ -64,8 +64,8 @@ def main():
                         print(f'Scraping {u}')
 
                     post = scraper.get_post_content()
-                    if post is not None:
-                        post_id = scraper.get_post_id()
+                    post_id = scraper.get_post_id()
+                    if post is not None and post_id is not None:
                         post_flair = scraper.get_flair()
                         tokenized_post = scraper.tokenize(post)
                         post_store.add(post_id, post_flair, ' '.join(tokenized_post), scraper.html)
@@ -201,6 +201,8 @@ class RedditScraper:
     def parse(self, element, attr_vals, inner_tag="p"):
         if self.soup:
             elem = self.soup.find(element, attrs=attr_vals)
+            if elem is None:
+                return None
             return " ".join(p.text.strip() for p in elem.find_all(inner_tag))
         return None
 
@@ -217,6 +219,8 @@ class RedditScraper:
 
     def get_flair(self):
         slot_element = self.soup.find("span", class_="linkflairlabel")
+        if slot_element is None:
+            return ''
         return slot_element.get_text(strip=True) if slot_element else ''
 
     def get_post_content(self):
@@ -226,6 +230,8 @@ class RedditScraper:
     def get_post_id(self):
         if self.soup:
             element = self.soup.find("div", attrs={"data-fullname": True})
+            if element is None:
+                return None
             return element["data-fullname"]
         return None
 
