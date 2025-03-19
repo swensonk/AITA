@@ -7,6 +7,23 @@ import glob
 import gzip
 
 
+def increment_word(old):
+    letters = 'abcdefghijklmnopqrstuvwxyz'
+    new = old
+    for n in range(len(old)):
+        i = len(old) - 1 - n
+        curr_letter = new[i]
+        curr_idx = letters.index(curr_letter)
+        if curr_idx == len(letters) - 1:
+            new = new[:i] + letters[0] + new[i+1:]
+            if i == 0:
+                new = letters[0] + new
+        else:
+            new = new[:i] + letters[curr_idx+1] + new[i+1:]
+            break
+    return new
+
+
 def main():
     initial_urls = [
         "https://old.reddit.com/r/AmItheAsshole/",
@@ -32,38 +49,45 @@ def main():
                                  ['cId', 'iId'])
     save_every_min = 1
     last_save_time = time.time()
-    scraped_something = True
-    while scraped_something:
-        scraped_something = False
-        for u in urls:
-            if url_manager.is_matching(u) and not url_manager.was_crawled(u):
-                scraper = RedditScraper(u)
-                scraper.get_content()
-                success = url_manager.crawl(u, scraper.soup)
-                if success:
-                    print(f'Scraping {u}')
+    search_word = 'a'
+    search_types = ['new', 'top', 'relevance', 'comments']
+    while True:
+        scraped_something = True
+        while scraped_something:
+            scraped_something = False
+            for u in urls:
+                if url_manager.is_matching(u) and not url_manager.was_crawled(u):
+                    scraper = RedditScraper(u)
+                    scraper.get_content()
+                    success = url_manager.crawl(u, scraper.soup)
+                    if success:
+                        print(f'Scraping {u}')
 
-                post = scraper.get_post_content()
-                if post is not None:
-                    post_id = scraper.get_post_id()
-                    post_flair = scraper.get_flair()
-                    tokenized_post = scraper.tokenize(post)
-                    post_store.add(post_id, post_flair, ' '.join(tokenized_post), scraper.html)
-                    print(f'Scraped post: "{post_id}", flair: "{post_flair}"')
-            else:
-                success = url_manager.crawl(u)
-                if success:
-                    print(f'Scraping {u}')
+                    post = scraper.get_post_content()
+                    if post is not None:
+                        post_id = scraper.get_post_id()
+                        post_flair = scraper.get_flair()
+                        tokenized_post = scraper.tokenize(post)
+                        post_store.add(post_id, post_flair, ' '.join(tokenized_post), scraper.html)
+                        print(f'Scraped post: "{post_id}", flair: "{post_flair}"')
+                else:
+                    success = url_manager.crawl(u)
+                    if success:
+                        print(f'Scraping {u}')
 
-            scraped_something |= success
+                scraped_something |= success
 
-            if time.time() >= last_save_time + save_every_min * 60:
-                url_manager.to_file(url_store_path)
-                last_save_time = time.time()
+                if time.time() >= last_save_time + save_every_min * 60:
+                    url_manager.to_file(url_store_path)
+                    last_save_time = time.time()
 
-        urls = url_manager.get_all_urls()
+            urls = url_manager.get_all_urls()
 
-    url_manager.to_file(url_store_path)
+        url_manager.to_file(url_store_path)
+
+        urls = ['https://old.reddit.com/r/AmItheAsshole/search/?q=' + search_word + \
+                '&include_over_18=on&restrict_sr=on&t=all&sort=' + t for t in search_types]
+        search_word = increment_word(search_word)
     return
 
 
