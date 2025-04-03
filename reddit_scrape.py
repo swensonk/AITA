@@ -65,7 +65,9 @@ def main():
 
                     post = scraper.get_post_content()
                     post_id = scraper.get_post_id()
-                    if post is not None and post_id is not None:
+
+                    # Make sure post exists, is beefy enough, and has an ID
+                    if post is not None and post_id is not None and len(post) >= 100:
                         post_flair = scraper.get_flair()
                         tokenized_post = scraper.tokenize(post)
                         post_store.add(post_id, post_flair, ' '.join(tokenized_post), scraper.html)
