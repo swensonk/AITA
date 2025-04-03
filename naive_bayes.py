@@ -14,14 +14,12 @@ from reddit_scrape import PostStore
 # Step 1: Load Reddit Data
 def load_posts(folder): #TODO: Handle blank flairs
     data = []
-    for txt_file in glob(os.path.join(folder, "post_*.txt")):
-        with open(txt_file, 'r', encoding='utf-8') as f:
-            lines = [line.strip() for line in f if line.strip()]
-            if len(lines) >= 2:
-                flair = lines[0]
-                print("")
-                post = " ".join(lines[1:])
-                data.append((post, flair))
+    store = PostStore('../reddit_scraper_results')
+    for id in store.keys():
+        flair, contents = store.get(id)
+    if flair not in {" ", "", "UPDATE", "META"}:
+        print(flair)
+        data.append((contents, flair))
     return data
 
 # Step 2: Processing (Expanding Contractions -> Tokenizing -> Lemmatizing)
