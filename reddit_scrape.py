@@ -32,7 +32,7 @@ def main():
         "https://old.reddit.com/r/AmItheAsshole/controversial/?t=all",
         "https://old.reddit.com/r/AmItheAsshole/top/?t=all",
     ]
-    result_folder = '../../reddit_scraper_results'
+    result_folder = '../reddit_scraper_results'
 
     urls = initial_urls
     post_store = PostStore(result_folder)

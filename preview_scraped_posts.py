@@ -4,7 +4,7 @@ from reddit_scrape import PostStore, RedditScraper
 
 
 def main():
-    store = PostStore('../../reddit_scraper_results')
+    store = PostStore('../reddit_scraper_results')
     for id in store.keys():
         flair, contents = store.get(id)
         html = store.get_html(id)
