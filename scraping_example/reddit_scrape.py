@@ -122,7 +122,9 @@ class PostStore:
 
         with open(file_name, 'r', encoding='utf-8') as f:
             file_lines = [l.strip() for l in f.readlines()]
-        file_lines = [l for l in file_lines if file_lines != '']
+
+        # Remove blank lines (except first line for blank flairs)
+        file_lines = [l for i, l in enumerate(file_lines) if i == 0 or l != '']
 
         flair = file_lines[0]
         contents = '\n'.join(file_lines[1:])
