@@ -10,19 +10,20 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from reddit_scrape import PostStore
+import random
+from collections import defaultdict
 
-# Step 1: Load Reddit Data
-def load_posts(folder): #TODO: Handle blank flairs
+# Load Reddit Data
+def load_posts(folder):
     data = []
     store = PostStore('../reddit_scraper_results')
     for id in store.keys():
         flair, contents = store.get(id)
-    if flair not in {" ", "", "UPDATE", "META"}:
-        print(flair)
-        data.append((contents, flair))
+        if flair in {"Not the A-hole", "Asshole", "Everyone Sucks", "No A-holes here"}:
+            data.append((contents, flair))
     return data
 
-# Step 2: Processing (Expanding Contractions -> Tokenizing -> Lemmatizing)
+# Processing (Expanding Contractions -> Tokenizing -> Lemmatizing)
 lemmatizer = WordNetLemmatizer()
 tokenizer = RegexpTokenizer(r"[a-zA-Z0-9]+")
 
@@ -32,11 +33,30 @@ def preprocess(text):
     lemmatized = [lemmatizer.lemmatize(token) for token in tokens]
     return " ".join(lemmatized)
 
+# Oversample
+def oversample_dataset(data):
+    label_buckets = defaultdict(list)
+    for post, label in data:
+        label_buckets[label].append((post, label))
+
+    max_size = max(len(bucket) for bucket in label_buckets.values())
+    
+    balanced = []
+    for label, bucket in label_buckets.items():
+        if len(bucket) < max_size:
+            # Duplicate samples to match max_size
+            oversampled = random.choices(bucket, k=max_size - len(bucket))
+            bucket += oversampled
+        balanced.extend(bucket)
+
+    random.shuffle(balanced)
+    return balanced
 
 def main():
-    # Step 3: Create Model
+    # Create Model
     data_folder = '../reddit_scraper_results'
     raw_data = load_posts(data_folder)
+    raw_data = oversample_dataset(raw_data)
     texts = [preprocess(text) for text, flair in raw_data]
     labels = [flair for _, flair in raw_data]
 
@@ -44,16 +64,16 @@ def main():
         texts, labels, test_size=0.2, stratify=labels, random_state=42
     )
 
-    # Step 4: Create Pipeline
+    # Create Pipeline
     clf_pipeline = Pipeline([
-        ('tfidf', TfidfVectorizer(ngram_range=(1, 2))),  # unigrams & bigrams
+        ('tfidf', TfidfVectorizer(ngram_range=(1, 2))),  # unigrams (1, 1) - unigrams & bigrams (1, 2)
         ('nb', MultinomialNB())
     ])
 
-    # Step 5: Train Model
+    # Train Model
     clf_pipeline.fit(X_train, y_train)
 
-    # Step 6: Evaluate Model
+    # Evaluate Model
     y_pred = clf_pipeline.predict(X_test)
     print(classification_report(y_test, y_pred))
 
