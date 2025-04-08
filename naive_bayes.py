@@ -44,13 +44,23 @@ def oversample_dataset(data):
     balanced = []
     for label, bucket in label_buckets.items():
         if len(bucket) < max_size:
-            # Duplicate samples to match max_size
             oversampled = random.choices(bucket, k=max_size - len(bucket))
             bucket += oversampled
         balanced.extend(bucket)
 
     random.shuffle(balanced)
     return balanced
+
+def classify_user_input(pipeline):
+    print("\nEnter a Reddit AITA post (or type 'quit' to exit):\n")
+    while True:
+        user_input = input("Post: ")
+        if user_input.lower() in {"quit", "exit"}:
+            break
+        cleaned_input = preprocess(user_input)
+        prediction = pipeline.predict([cleaned_input])[0]
+        print(f"\nPredicted Flair: **{prediction}**\n")
+
 
 def main():
     # Create Model
@@ -76,6 +86,9 @@ def main():
     # Evaluate Model
     y_pred = clf_pipeline.predict(X_test)
     print(classification_report(y_test, y_pred))
+
+    classify_user_input(clf_pipeline)
+
 
 if __name__ == "__main__":
     main()
