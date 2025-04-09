@@ -12,6 +12,7 @@ from sklearn.metrics import classification_report
 from reddit_scrape import PostStore
 import random
 from collections import defaultdict
+import numpy as np
 
 # Load Reddit Data
 def load_posts(folder):
@@ -59,7 +60,9 @@ def classify_user_input(pipeline):
             break
         cleaned_input = preprocess(user_input)
         prediction = pipeline.predict([cleaned_input])[0]
-        print(f"\nPredicted Flair: **{prediction}**\n")
+        confidence = np.max(pipeline.predict_proba([cleaned_input])[0])
+        print(f"\nPredicted Flair: **{prediction}**")
+        print(f"Confidence: {confidence:.3f}\n")
 
 
 def main():
