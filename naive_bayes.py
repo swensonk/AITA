@@ -17,6 +17,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import sys
+from joblib import dump, load
 
 nltk.data.path.append("nltk_data")
 #Setting up data path
@@ -80,6 +81,7 @@ def classify_user_input(pipeline):
 
 def main():
     # Create Model
+
     data_path = resource_path('data/reddit_scraper_results')
     raw_data = load_posts(data_path)
     raw_data = oversample_dataset(raw_data)
@@ -123,7 +125,7 @@ def main():
 
     averages_df = pd.DataFrame(averages).T
     print(averages_df)
-
+    dump(clf_pipeline, 'model_pipeline.joblib')
     classify_user_input(clf_pipeline)
 
 
