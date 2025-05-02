@@ -84,7 +84,6 @@ def main():
 
     data_path = resource_path('data/reddit_scraper_results')
     raw_data = load_posts(data_path)
-    raw_data = oversample_dataset(raw_data)
     texts = [preprocess(text) for text, flair in raw_data]
     labels = [flair for _, flair in raw_data]
 
@@ -105,6 +104,10 @@ def main():
     for train_idx, val_idx in skf.split(X_np, y_np):
         X_train, X_val = X_np[train_idx], X_np[val_idx]
         y_train, y_val = y_np[train_idx], y_np[val_idx]
+
+        train_balanced = oversample_dataset(zip(X_train, y_train))
+        X_train = np.array([sample[0] for sample in train_balanced])
+        y_train = np.array([sample[1] for sample in train_balanced])
 
         clf_pipeline.fit(X_train, y_train)
         y_pred = clf_pipeline.predict(X_val)
