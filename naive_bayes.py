@@ -30,7 +30,7 @@ def resource_path(relative_path):
 # Load Reddit Data
 def load_posts(folder):
     data = []
-    data_path = resource_path('data/reddit_scraper_results')
+    data_path = resource_path('../reddit_scraper_results')
     store = PostStore(data_path)
     for id in store.keys():
         flair, contents = store.get(id)
@@ -67,11 +67,18 @@ def oversample_dataset(data):
     return balanced
 
 def classify_user_input(pipeline):
-    print("\nEnter a Reddit AITA post (or type 'quit' to exit):\n")
+    print("\nEnter a Reddit AITA post (type a single '.' on a new line to finish, or 'quit' to exit):\n")
     while True:
-        user_input = input("Post: ")
-        if user_input.lower() in {"quit", "exit"}:
-            break
+        print("Post:")
+        lines = []
+        while True:
+            line = input()
+            if line.strip().lower() in {"quit", "exit"}:
+                return
+            if line.strip() == ".":
+                break
+            lines.append(line)
+        user_input = "\n".join(lines)
         cleaned_input = preprocess(user_input)
         prediction = pipeline.predict([cleaned_input])[0]
         confidence = np.max(pipeline.predict_proba([cleaned_input])[0])
@@ -79,9 +86,9 @@ def classify_user_input(pipeline):
         print(f"Confidence: {confidence:.3f}\n")
 
 
+
 def main():
     # Create Model
-
     data_path = resource_path('data/reddit_scraper_results')
     raw_data = load_posts(data_path)
     texts = [preprocess(text) for text, flair in raw_data]
