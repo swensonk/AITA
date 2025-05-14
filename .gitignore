@@ -1,1 +1,5 @@
 **/__pycache__/
+build/
+data/
+dist/
+nltk_data/

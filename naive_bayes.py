@@ -30,7 +30,7 @@ def resource_path(relative_path):
 # Load Reddit Data
 def load_posts(folder):
     data = []
-    data_path = resource_path('../reddit_scraper_results')
+    data_path = resource_path('data/reddit_scraper_results')
     store = PostStore(data_path)
     for id in store.keys():
         flair, contents = store.get(id)
@@ -93,6 +93,11 @@ def main():
     raw_data = load_posts(data_path)
     texts = [preprocess(text) for text, flair in raw_data]
     labels = [flair for _, flair in raw_data]
+
+    np_labels = np.array(labels)
+    for l in np.unique(np_labels):
+        count = np.sum(np_labels == l)
+        print(f'Count of "{l}": {count}')
 
     X_trainval, X_test, y_trainval, y_test = train_test_split(
         texts, labels, test_size=0.2, stratify=labels, random_state=42
